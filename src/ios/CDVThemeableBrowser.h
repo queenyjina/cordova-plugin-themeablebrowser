@@ -21,11 +21,11 @@
 #import <Cordova/CDVInvokedUrlCommand.h>
 #import <Cordova/CDVScreenOrientationDelegate.h>
 
-#ifdef __CORDOVA_4_0_0
-    #import <Cordova/CDVUIWebViewDelegate.h>
-#else
-    #import <Cordova/CDVWebViewDelegate.h>
-#endif
+//#ifdef __CORDOVA_4_0_0
+//    #import <Cordova/CDVUIWebViewDelegate.h>
+//#else
+//    #import <Cordova/CDVWebViewDelegate.h>
+//#endif
 
 @interface CDVThemeableBrowserOptions : NSObject {}
 
