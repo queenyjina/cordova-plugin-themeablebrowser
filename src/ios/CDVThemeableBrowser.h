@@ -20,12 +20,17 @@
 #import <Cordova/CDVPlugin.h>
 #import <Cordova/CDVInvokedUrlCommand.h>
 #import <Cordova/CDVScreenOrientationDelegate.h>
+#import <WebKit/WebKit.h>
+#import <UIKit/UIKit.h>
 
-#ifdef __CORDOVA_4_0_0
-    #import <Cordova/CDVUIWebViewDelegate.h>
-#else
-    #import <Cordova/CDVWebViewDelegate.h>
-#endif
+//#ifdef __CORDOVA_4_0_0
+//    #import <Cordova/CDVUIWebViewDelegate.h>
+//#else
+//    #import <CDVWKWebViewUIDelegate.h>
+//    //#import <Cordova/CDVWebViewDelegate.h>
+//#endif
+
+@class CDVWKInAppBrowserViewController;
 
 @interface CDVThemeableBrowserOptions : NSObject {}
 
@@ -39,6 +44,7 @@
 @property (nonatomic) NSString* transitionstyle;
 
 @property (nonatomic) BOOL zoom;
+@property (nonatomic) BOOL enableviewportscale;
 @property (nonatomic) BOOL mediaplaybackrequiresuseraction;
 @property (nonatomic) BOOL allowinlinemediaplayback;
 @property (nonatomic) BOOL keyboarddisplayrequiresuseraction;
@@ -49,7 +55,9 @@
 @property (nonatomic) NSDictionary* statusbar;
 @property (nonatomic) NSDictionary* toolbar;
 @property (nonatomic) NSDictionary* title;
+@property (nonatomic) NSDictionary* browserProgress;
 @property (nonatomic) NSDictionary* backButton;
+@property (nonatomic) NSDictionary* reloadButton;
 @property (nonatomic) NSDictionary* forwardButton;
 @property (nonatomic) NSDictionary* closeButton;
 @property (nonatomic) NSDictionary* menu;
@@ -57,14 +65,16 @@
 @property (nonatomic) BOOL backButtonCanClose;
 @property (nonatomic) BOOL disableAnimation;
 @property (nonatomic) BOOL fullscreen;
+@property (nonatomic) BOOL allowsBackForwardNavigationGestures;
+@property (nonatomic) NSString* customUserAgent;
 
 @end
 
 @class CDVThemeableBrowserViewController;
 
-@interface CDVThemeableBrowser : CDVPlugin {
-    BOOL _injectedIframeBridge;
+@interface CDVThemeableBrowser : CDVPlugin <WKNavigationDelegate> {
 }
+
 
 @property (nonatomic, retain) CDVThemeableBrowserViewController* themeableBrowserViewController;
 @property (nonatomic, copy) NSString* callbackId;
@@ -76,35 +86,41 @@
 - (void)injectScriptCode:(CDVInvokedUrlCommand*)command;
 - (void)show:(CDVInvokedUrlCommand*)command;
 - (void)show:(CDVInvokedUrlCommand*)command withAnimation:(BOOL)animated;
+- (void)hide:(CDVInvokedUrlCommand*)command;
 - (void)reload:(CDVInvokedUrlCommand*)command;
+- (void)changeButtonImage:(CDVInvokedUrlCommand*)command;
 
 @end
 
-@interface CDVThemeableBrowserViewController : UIViewController <UIWebViewDelegate, CDVScreenOrientationDelegate, UIActionSheetDelegate>{
+@interface CDVThemeableBrowserViewController : UIViewController <WKNavigationDelegate,CDVScreenOrientationDelegate, UIActionSheetDelegate, UIGestureRecognizerDelegate, WKScriptMessageHandler, WKUIDelegate>{
     @private
-    NSString* _userAgent;
-    NSString* _prevUserAgent;
-    NSInteger _userAgentLockToken;
     UIStatusBarStyle _statusBarStyle;
     CDVThemeableBrowserOptions *_browserOptions;
-    
-#ifdef __CORDOVA_4_0_0
-    CDVUIWebViewDelegate* _webViewDelegate;
-#else
-    CDVWebViewDelegate* _webViewDelegate;
-#endif
+    NSDictionary *_settings;
+
+//#ifdef __CORDOVA_4_0_0
+////    kCDVWebViewEngineWKUIDelegate* _webViewDelegate;
+////    kCDVWebViewEngineWKNavigationDelegate * _webNavigationDelegate;
+////    CDVUIWebViewDelegate* _webViewDelegate;
+////#else
+////    kCDVWebViewEngineWKUIDelegate* _webViewDelegate;
+////    kCDVWebViewEngineWKNavigationDelegate * _webNavigationDelegate;
+////    //CDVWebViewDelegate* _webViewDelegate;
+//#endif
     
 }
 
-@property (nonatomic, strong) IBOutlet UIWebView* webView;
+@property (nonatomic, strong) IBOutlet WKWebView* webView;
 @property (nonatomic, strong) IBOutlet UIButton* closeButton;
 @property (nonatomic, strong) IBOutlet UILabel* addressLabel;
 @property (nonatomic, strong) IBOutlet UILabel* titleLabel;
 @property (nonatomic, strong) IBOutlet UIButton* backButton;
+@property (nonatomic, strong) IBOutlet UIButton* reloadButton;
 @property (nonatomic, strong) IBOutlet UIButton* forwardButton;
 @property (nonatomic, strong) IBOutlet UIButton* menuButton;
 @property (nonatomic, strong) IBOutlet UIActivityIndicatorView* spinner;
 @property (nonatomic, strong) IBOutlet UIView* toolbar;
+@property (nonatomic, strong) IBOutlet UIProgressView* progressView;
 
 @property (nonatomic, strong) NSArray* leftButtons;
 @property (nonatomic, strong) NSArray* rightButtons;
@@ -113,6 +129,8 @@
 @property (nonatomic, weak) CDVThemeableBrowser* navigationDelegate;
 @property (nonatomic) NSURL* currentURL;
 @property (nonatomic) CGFloat titleOffset;
+@property (nonatomic , readonly , getter=loadProgress) CGFloat currentProgress;
+- (void)changeButtonImage:(int)buttonIndex buttonProps:(NSDictionary*)buttonProps;
 
 - (void)close;
 - (void)reload;
@@ -121,7 +139,7 @@
 - (void)showToolBar:(BOOL)show : (NSString*) toolbarPosition;
 - (void)setCloseButtonTitle:(NSString*)title;
 
-- (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVThemeableBrowserOptions*) browserOptions navigationDelete:(CDVThemeableBrowser*) navigationDelegate statusBarStyle:(UIStatusBarStyle) statusBarStyle;
+- (id)initWithBrowserOptions: (CDVThemeableBrowserOptions*) browserOptions navigationDelete:(CDVThemeableBrowser*) navigationDelegate statusBarStyle:(UIStatusBarStyle) statusBarStyle settings:(NSDictionary*) settings;
 
 + (UIColor *)colorFromRGBA:(NSString *)rgba;
 
